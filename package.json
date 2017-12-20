@@ -1,0 +1,24 @@
+{
+  "name": "phaserracinggame",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.16.2",
+    "socket.io": "^2.0.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rgurowich/PhaserRacingGame.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rgurowich/PhaserRacingGame/issues"
+  },
+  "homepage": "https://github.com/Rgurowich/PhaserRacingGame#readme"
+}

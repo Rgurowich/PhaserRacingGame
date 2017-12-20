@@ -1,0 +1,49 @@
+<!-- <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas> -->
+<html>
+
+<head>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="client/js/phaser.min.js"></script>
+</head>
+
+<body>
+  <script src="client/js/car.js" type="text/javascript"></script>
+  <script src="client/js/game.js" type="text/javascript"></script>
+</body>
+</body>
+<script>
+  // var ctx = document.getElementById("ctx").getContext("2d");
+  // ctx.font = '30px Arial';
+  var socket = io();
+  //
+  // socket.on('newPostions',function(data){
+  //   ctx.clearRect(0,0,500,500);
+  //   for(var i = 0; i < data.length; i++){
+  //       ctx.fillText('CAR',data[i].x,data[i].y);
+  //   }
+  // });
+  //
+  // document.onkeydown = function(event){
+  //   if(event.keyCode === 68)
+  //       socket.emit('keyPress',{inputId:'right', state:true});
+  //   else if(event.keyCode === 83)
+  //       socket.emit('keyPress',{inputId:'down', state:true});
+  //   else if(event.keyCode === 65)
+  //       socket.emit('keyPress',{inputId:'left', state:true});
+  //   else if(event.keyCode === 87)
+  //       socket.emit('keyPress',{inputId:'up', state:true});
+  // }
+  //
+  // document.onkeyup = function(event){
+  //   if(event.keyCode === 68)
+  //       socket.emit('keyPress',{inputId:'right', state:false});
+  //   else if(event.keyCode === 83)
+  //       socket.emit('keyPress',{inputId:'down', state:false});
+  //   else if(event.keyCode === 65)
+  //       socket.emit('keyPress',{inputId:'left', state:false});
+  //   else if(event.keyCode === 87)
+  //       socket.emit('keyPress',{inputId:'up', state:false});
+  // }
+</script>
+
+</html>
