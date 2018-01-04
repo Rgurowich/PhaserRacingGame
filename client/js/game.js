@@ -12,6 +12,7 @@ var x = 0;
 var y = 0;
 var playerCar;
 var CollisionTrack;
+var playerMap = [];
 
 function preload() {
   this.game.load.spritesheet('track', 'client/img/Background-Track.png');
@@ -25,7 +26,6 @@ function preload() {
 }
 
 function create() {
-  var playerMap = {};
   console.log("creating game");
   game.physics.startSystem(Phaser.Physics.P2JS);
   var track = game.add.sprite(0, 0, 'track');
@@ -41,19 +41,22 @@ function update() {
   this.camera.follow(playerCar, Phaser.Camera.FOLLOW_LOCKON);
   if (cursors.up.isDown && velocity <= 200) {
     velocity += 4;
-    socket.emit('keyPress', {
-      inputId: 'up',
-      state: true
-    });
-  } else if (cursors.down.isDown && velocity >= -50) {
-    velocity -= 4;
-    socket.emit('keyPress', {
-      inputId: 'down',
-      state: true
-    });
-  } else {
+    socket.emit('keyPress', {inputId: 'up',state: true});
+  }
+  else if (cursors.up.isUp) {
+    socket.emit('keyPress', {inputId: 'up',state: true});
     if (velocity >= 1)
       velocity -= 1;
+  }
+
+  if (cursors.down.isDown && velocity >= -50) {
+    velocity -= 4;
+    socket.emit('keyPress', {inputId: 'down',state: true});
+  }
+  else if (cursors.up.isUp) {
+    socket.emit('keyPress', {inputId: 'down',state: true});
+    if (velocity <= -1)
+      velocity += 1;
   }
 
 
@@ -62,13 +65,19 @@ function update() {
   playerCar.body.velocity.y = velocity * Math.sin((playerCar.angle - 90) * 0.01745);
 
   if (cursors.left.isDown)
+  {
     playerCar.body.angularVelocity = -1 * (velocity / 50);
-  //socket.emit('keyPress',{inputId:'left', state:true});
+    socket.emit('keyPress',{inputId:'left', state:true});
+  }
   else if (cursors.right.isDown)
+  {
     playerCar.body.angularVelocity = 1 * (velocity / 50);
-  //socket.emit('keyPress',{inputId:'right', state:true});
+    socket.emit('keyPress',{inputId:'right', state:true});
+  }
   else
+  {
     playerCar.body.angularVelocity = 0;
+  }
 
   text.setText("Speed = " + velocity);
   text.x = Math.floor(playerCar.x);
@@ -113,7 +122,6 @@ function CarInteraction() {
       align: "center"
     });
 
-
     text.anchor.setTo(0.5, 0.5);
   }
 
@@ -133,4 +141,5 @@ function CarUpdate(){
       playerCar.y = data[i].y;
     }
   });
+
 }
