@@ -1,5 +1,21 @@
-<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
-<html>
+<div id="logInDiv">
+    Username: <input id="logInDiv-username" type="text"></input><br>
+    Password: <input id="logInDiv-password" type="password"></input>
+    <button id="logInDiv-logIn">Log In</button>
+    <button id="logInDiv-signUp">Sign Up</button>
+</div>
+<div id="gameDiv" style="display:none;">
+  <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+  <html>
+
+  <div id="ingame-text" style="width:500px;height:100px;overflow-y:scroll">
+    <div>Welcome!</div>
+  </div>
+
+  <form id="ingame-text-form">
+      <input id="ingame-text-input" type="text" style="width:500px"></input>
+  </form>
+</div>
 
 <head>
   <script src="/socket.io/socket.io.js"></script>
@@ -9,9 +25,45 @@
 </body>
 </body>
 <script>
+  var socket = io();
+
+  // LOGIN SCRIPT //
+  var logInDiv = document.getElementById('logInDiv');
+  var logInDivLogIn = document.getElementById('logInDiv-logIn');
+  var logInDivSignUp = document.getElementById('logInDiv-signUp');
+  var logInDivUsername = document.getElementById('logInDiv-username');
+  var logInDivPassword = document.getElementById('logInDiv-password');
+
+  logInDivLogIn.onclick = function(){
+    socket.emit('logIn',{username:logInDivUsername.value,password:logInDivPassword.value});
+  }
+  logInDivSignUp.onclick = function(){
+    socket.emit('signUp',{username:logInDivUsername.value,password:logInDivPassword.value});
+  }
+  socket.on('logInResponse',function(data){
+    if(data.success){
+        logInDiv.style.display = 'none';
+        gameDiv.style.display = 'inline-block';
+    } else
+        alert("Log in unsuccessul.");
+  });
+  socket.on('signUpResponse',function(data){
+    if(data.success){
+        alert("Sign up successul.");
+    } else
+        alert("Sign up unsuccessul.");
+  });
+
+
+
+
+  // GAME SCRIPT //
+  var ingameText = document.getElementById('ingame-text');
+  var ingameTextInput = document.getElementById('ingame-text-input');
+  var ingameTextForm = document.getElementById('ingame-text-form');
   var ctx = document.getElementById("ctx").getContext("2d");
   ctx.font = '30px Arial';
-  var socket = io();
+
 
   socket.on('newPostions',function(data){
     ctx.clearRect(0,0,500,500);
@@ -22,6 +74,25 @@
         ctx.fillRect(data.shell[i].x-5,data.shell[i].y-5,10,10);
     }
   });
+
+  socket.on('addIngameText',function(data){
+    ingameText.innerHTML += '<div>' + data + '<div>';
+  });
+  socket.on('evalAnswer',function(data){
+    console.log(data);
+  });
+
+  ingameTextForm.onsubmit = function(e) {
+    e.preventDefault();
+    if(ingameTextInput.value[0] === '/'){
+      socket.emit('evalServer',ingameTextInput.value.slice(1));
+    }
+    else {
+      socket.emit('sendTxtToServer',ingameTextInput.value);
+    }
+    ingameTextInput.value = '';
+  }
+
 
   document.onkeydown = function(event){
     if(event.keyCode === 68)
@@ -43,6 +114,19 @@
         socket.emit('keyPress',{inputId:'left', state:false});
     else if(event.keyCode === 87)
         socket.emit('keyPress',{inputId:'up', state:false});
+  }
+
+  document.onmousedown = function(event){
+      socket.emit('keyPress',{inputId:'firing',state:true});
+  }
+  document.onmouseup = function(event){
+      socket.emit('keyPress',{inputId:'firing',state:false});
+  }
+  document.onmousemove = function(event){
+      var x = -250 + event.clientX - 8;
+      var y = -250 + event.clientY - 8;
+      var angle = Math.atan2(y,x) / Math.PI * 180;
+      socket.emit('keyPress',{inputId:'mouseAngle',state:angle});
   }
 </script>
 
