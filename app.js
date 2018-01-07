@@ -11,8 +11,8 @@ app.use('/client', express.static(__dirname + '/client'));
 app.use('/client/img', express.static(__dirname + '/client/img'));
 app.use('/client/js', express.static(__dirname + '/client/js'));
 
-serv.listen(8080);
-hostServer.listen(process.env.PORT || 8080);
+//serv.listen(8080);
+serv.listen(process.env.PORT || 8080);
 console.log("Server Started");
 
 var SOCKET_LIST = {};
