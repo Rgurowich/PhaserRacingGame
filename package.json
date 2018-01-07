@@ -9,7 +9,7 @@
     "socket.io": "^2.0.4"
   },
   "engines": {
-    "node": "4.1.x"
+    "node": "9.3.0"
   },
   "devDependencies": {},
   "scripts": {
