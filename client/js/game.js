@@ -23,14 +23,14 @@ logInDivSignUp.onclick = function() {
   });
 }
 socket.on('logInResponse', function(data) {
-    playerNumber = data.numPly;
-    console.log(playerNumber);
-    if (data.success) {
-      logInDiv.style.display = 'none';
-      gameDiv.style.display = 'inline-block';
-    } else{
-      alert("Log in unsuccessful.");
-    }
+  playerNumber = data.numPly;
+  console.log(playerNumber);
+  if (data.success) {
+    logInDiv.style.display = 'none';
+    gameDiv.style.display = 'inline-block';
+  } else {
+    alert("Log in unsuccessful.");
+  }
 });
 
 socket.on('fullResponse', function(data) {
@@ -79,50 +79,50 @@ Img.map.src = '/client/img/map.png';
 var ctx = document.getElementById("ctx").getContext("2d");
 ctx.font = '30px Arial';
 
-  var Player = function(initPack) {
-    var self = {};
-    self.id = initPack.id;
-    self.number = initPack.number;
-    self.x = initPack.x;
-    self.y = initPack.y;
-    self.hp = initPack.hp;
-    self.maxHp = initPack.maxHp;
-    self.score = initPack.score;
-    self.draw = function() {
-      var hpWidth = 30 * self.hp / self.maxHp;
-      ctx.fillStyle = 'green';
-      ctx.fillRect(self.x - hpWidth / 2, self.y - 40, hpWidth, 4);
-      var width = Img.player.width * 2;
-      var height = Img.player.height * 2;
-      if(self.y > 300)
-        ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x - width / 2, self.y - height / 2, width, height);
-      else {
-        ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, self.x - width / 2, self.y - height / 2, width, height);
-      }
+var Player = function(initPack) {
+  var self = {};
+  self.id = initPack.id;
+  self.number = initPack.number;
+  self.x = initPack.x;
+  self.y = initPack.y;
+  self.hp = initPack.hp;
+  self.maxHp = initPack.maxHp;
+  self.score = initPack.score;
+  self.draw = function() {
+    var hpWidth = 30 * self.hp / self.maxHp;
+    ctx.fillStyle = 'green';
+    ctx.fillRect(self.x - hpWidth / 2, self.y - 40, hpWidth, 4);
+    var width = Img.player.width * 2;
+    var height = Img.player.height * 2;
+    if (self.y > 300)
+      ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x - width / 2, self.y - height / 2, width, height);
+    else {
+      ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, self.x - width / 2, self.y - height / 2, width, height);
     }
-    console.log("x = " + self.x + "y = " + self.y);
-    Player.list[self.id] = self;
-    return self;
   }
+  console.log("x = " + self.x + "y = " + self.y);
+  Player.list[self.id] = self;
+  return self;
+}
 
-  Player.list = {};
+Player.list = {};
 
-  var Shell = function(initPack) {
-    var self = {};
-    self.id = initPack.id;
-    self.x = initPack.x;
-    self.y = initPack.y;
-    self.draw = function() {
-      var width = Img.shell.width;
-      var height = Img.shell.height;
-      ctx.drawImage(Img.shell, 0, 0, Img.shell.width, Img.shell.height,
-        self.x - 5, self.y - 30, width, height);
-    }
-    Shell.list[self.id] = self;
-    return self;
+var Shell = function(initPack) {
+  var self = {};
+  self.id = initPack.id;
+  self.x = initPack.x;
+  self.y = initPack.y;
+  self.draw = function() {
+    var width = Img.shell.width;
+    var height = Img.shell.height;
+    ctx.drawImage(Img.shell, 0, 0, Img.shell.width, Img.shell.height,
+      self.x - 5, self.y - 30, width, height);
   }
+  Shell.list[self.id] = self;
+  return self;
+}
 
-  Shell.list = {};
+Shell.list = {};
 
 
 var selfId = null;
@@ -131,12 +131,12 @@ socket.on('init', function(data) {
   if (data.selfId) {
     selfId = data.selfId;
   }
-    for (var i = 0; i < data.player.length; i++) {
-      new Player(data.player[i]);
-    }
-    for (var i = 0; i < data.shell.length; i++) {
-      new Shell(data.shell[i]);
-    }
+  for (var i = 0; i < data.player.length; i++) {
+    new Player(data.player[i]);
+  }
+  for (var i = 0; i < data.shell.length; i++) {
+    new Shell(data.shell[i]);
+  }
 });
 
 socket.on('update', function(data) {
@@ -182,8 +182,8 @@ setInterval(function() {
   drawMap();
   drawScore();
   for (var i in Player.list) {
-      Player.list[i].draw();
-    }
+    Player.list[i].draw();
+  }
   for (var i in Shell.list) {
     Shell.list[i].draw();
   }

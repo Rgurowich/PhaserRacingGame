@@ -26,33 +26,45 @@ var tankOneFiringAngle = 270;
 var tankTwoFiringAngle = 180;
 var x;
 var y;
+var Ontop = false;
 
-var GetTankPosition = function(){
-  if(numberOfPlayers == 1)
+var GetTankPosition = function() {
+  if(numberOfPlayers <= 0)
   {
+    numberOfPlayers = 1;
+  }
+  if (numberOfPlayers == 1) {
     x = tankOnex;
     y = tankOney;
-  } else if (numberOfPlayers == 2){
+  } else if (numberOfPlayers == 2) {
     x = tankTwox;
     y = tankTwoy;
-    } else {
+  } else {
+    x = tankOnex;
+    y = tankOney;
     console.log("No players");
   }
 }
 
-var GetShellSpeed = function(p){
-  if(numberOfPlayers == 1)
-  {
+var GetShellSpeed = function(p) {
+  if (numberOfPlayers == 1) {
     p.shellSpeedy = Math.cos(90 / Math.PI) * 20;
     console.log("Shell up");
-  } else if (numberOfPlayers == 2){
+  } else if (numberOfPlayers == 2) {
     p.shellSpeedy = Math.cos(90 / Math.PI) * -20;
     console.log("Shell down");
-    } else {
-
+  } else {
+    p.shellSpeedy = Math.cos(90 / Math.PI) * 20;
   }
 }
 
+var GetDisconnectedPlayer = function(p){
+  if (numberOfPlayers == 1 && p.y == tankOney){
+    numberOfPlayers = 1;
+  } else if (numberOfPlayers == 1 && p.y == tankTwoy){
+    numberOfPlayers = 0;
+  }
+}
 var SOCKET_LIST = {};
 //Gives attributes to all entitys in the game//
 var Entity = function() {
@@ -77,78 +89,80 @@ var Entity = function() {
   return self;
 }
 //player attributes//
-  var Player = function(id) {
-    var self = Entity();
-    self.id = id;
-    self.number = "" + Math.floor(10 * Math.random());
-    self.pressingRight = false;
-    self.pressingLeft = false;
-    self.pressingClick = false;
-    self.firingAngle = tankOneFiringAngle;
-    self.maxSpeed = 10;
-    self.hp = 10;
-    self.maxHp = 10;
-    self.score = 0;
-    self.shellSpeedy = 0;
-    GetShellSpeed(self);
-    //override for speed and update//
-    var super_update = self.update;
-    self.update = function() {
-      self.updateSpd();
-      super_update();
+var Player = function(id) {
+  var self = Entity();
+  self.id = id;
+  self.number = "" + Math.floor(10 * Math.random());
+  self.pressingRight = false;
+  self.pressingLeft = false;
+  self.pressingClick = false;
+  self.firingAngle = tankOneFiringAngle;
+  self.maxSpeed = 10;
+  self.hp = 10;
+  self.maxHp = 10;
+  self.score = 0;
+  self.shellSpeedy = 0;
+  self.atTop = false;
+  GetShellSpeed(self);
+  //override for speed and update//
+  var super_update = self.update;
+  self.update = function() {
+    self.updateSpd();
+    super_update();
 
-      if (self.pressingClick) {
-        self.fireShell(self.firingAngle);
-      }
+    if (self.pressingClick) {
+      self.fireShell(self.firingAngle);
     }
-    self.fireShell = function(angle, x ,y) {
-      var s = Shell(self, angle, x, y);
-      s.x = self.x;
-      s.y = self.y;
-    }
-
-    self.updateSpd = function() {
-      if (self.pressingRight)
-        self.spdX = self.maxSpeed;
-      else if (self.pressingLeft)
-        self.spdX = -self.maxSpeed;
-      else
-        self.spdX = 0;
-
-      if (self.pressingUp)
-        self.spdY = -self.maxSpeed;
-      else if (self.pressingDown)
-        self.spdY = self.maxSpeed;
-      else
-        self.spdY = 0;
-    }
-
-    self.getInitPack = function() {
-      return {
-        id: self.id,
-        x: self.x,
-        y: self.y,
-        number: self.number,
-        hp: self.hp,
-        maxHp: self.maxHp,
-        score: self.score,
-      };
-    }
-    self.getUpdatePack = function() {
-      return {
-        id: self.id,
-        x: self.x,
-        y: self.y,
-        hp: self.hp,
-        score: self.score,
-      };
-    }
-
-    Player.list[id] = self;
-    initPack.player.push(self.getInitPack());
-    return self;
+    GetDisconnectedPlayer(self);
   }
-  Player.list = {};
+  self.fireShell = function(angle, x, y) {
+    var s = Shell(self, angle, x, y);
+    s.x = self.x;
+    s.y = self.y;
+  }
+
+  self.updateSpd = function() {
+    if (self.pressingRight)
+      self.spdX = self.maxSpeed;
+    else if (self.pressingLeft)
+      self.spdX = -self.maxSpeed;
+    else
+      self.spdX = 0;
+
+    if (self.pressingUp)
+      self.spdY = -self.maxSpeed;
+    else if (self.pressingDown)
+      self.spdY = self.maxSpeed;
+    else
+      self.spdY = 0;
+  }
+
+  self.getInitPack = function() {
+    return {
+      id: self.id,
+      x: self.x,
+      y: self.y,
+      number: self.number,
+      hp: self.hp,
+      maxHp: self.maxHp,
+      score: self.score,
+    };
+  }
+  self.getUpdatePack = function() {
+    return {
+      id: self.id,
+      x: self.x,
+      y: self.y,
+      hp: self.hp,
+      score: self.score,
+    };
+  }
+
+  Player.list[id] = self;
+  initPack.player.push(self.getInitPack());
+  return self;
+}
+Player.list = {};
 
 
 //Creates new player//
@@ -181,6 +195,7 @@ Player.getLoginPack = function() {
 }
 
 Player.onDisconnect = function(socket) {
+  console.log(numberOfPlayers);
   delete Player.list[socket.id];
   removePack.player.push(socket.id);
 }
@@ -314,15 +329,13 @@ io.sockets.on('connection', function(socket) {
         numberOfPlayers++;
         //Calls for new player once they have loged in//
         Player.onConnect(socket);
-        console.log(numberOfPlayers);
         socket.emit('logInResponse', {
           success: true,
           numPly: numberOfPlayers
         });
       } else if (res && numberOfPlayers >= 2) {
         socket.emit('fullResponse', {});
-      }
-      else {
+      } else {
         socket.emit('logInResponse', {
           success: false,
           numPly: numberOfPlayers
@@ -351,6 +364,7 @@ io.sockets.on('connection', function(socket) {
   socket.on('disconnect', function() {
     delete SOCKET_LIST[socket.id];
     Player.onDisconnect(socket);
+    numberOfPlayers--;
   });
   socket.on('sendTxtToServer', function(data) {
     var playerName = ("" + socket.id).slice(2, 7);
