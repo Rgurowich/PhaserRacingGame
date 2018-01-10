@@ -27,10 +27,11 @@ var tankTwoFiringAngle = 180;
 var x;
 var y;
 var Ontop = false;
+var canFire = true;
+var fireTimer;
 
 var GetTankPosition = function() {
-  if(numberOfPlayers <= 0)
-  {
+  if (numberOfPlayers <= 0) {
     numberOfPlayers = 1;
   }
   if (numberOfPlayers == 1) {
@@ -48,23 +49,32 @@ var GetTankPosition = function() {
 
 var GetShellSpeed = function(p) {
   if (numberOfPlayers == 1) {
-    p.shellSpeedy = Math.cos(90 / Math.PI) * 20;
+    p.shellSpeedy = Math.cos(90 / Math.PI) * 40;
     console.log("Shell up");
   } else if (numberOfPlayers == 2) {
-    p.shellSpeedy = Math.cos(90 / Math.PI) * -20;
+    p.shellSpeedy = Math.cos(90 / Math.PI) * -40;
     console.log("Shell down");
   } else {
-    p.shellSpeedy = Math.cos(90 / Math.PI) * 20;
+    p.shellSpeedy = Math.cos(90 / Math.PI) * 40;
   }
 }
 
-var GetDisconnectedPlayer = function(p){
-  if (numberOfPlayers == 1 && p.y == tankOney){
+var GetDisconnectedPlayer = function(p) {
+  if (numberOfPlayers == 1 && p.y == tankOney) {
     numberOfPlayers = 1;
-  } else if (numberOfPlayers == 1 && p.y == tankTwoy){
+  } else if (numberOfPlayers == 1 && p.y == tankTwoy) {
     numberOfPlayers = 0;
-  } else if (numberOfPlayers == 0 && p.y == tankOney){
+  } else if (numberOfPlayers == 0 && p.y == tankOney) {
     numberOfPlayers = 1;
+  }
+}
+
+  fireTimer = setInterval(function(){}, 1);
+
+var AbleToFire = function(){
+  if(canFire == true){
+    canFire = false;
+    fireTimer = setInterval(function(){canFire = true}, 2000);
   }
 }
 var SOCKET_LIST = {};
@@ -111,9 +121,10 @@ var Player = function(id) {
   self.update = function() {
     self.updateSpd();
     super_update();
-
-    if (self.pressingClick) {
+    if (self.pressingClick && canFire == true) {
       self.fireShell(self.firingAngle);
+      self.pressingClick = false;
+      AbleToFire();
     }
     GetDisconnectedPlayer(self);
   }
@@ -121,6 +132,7 @@ var Player = function(id) {
     var s = Shell(self, angle, x, y);
     s.x = self.x;
     s.y = self.y;
+    clearInterval(fireTimer);
   }
 
   self.updateSpd = function() {
@@ -177,8 +189,6 @@ Player.onConnect = function(socket) {
       player.pressingRight = data.state;
     else if (data.inputId === 'firing')
       player.pressingClick = data.state;
-    else if (data.inputId === 'firingAngle')
-      player.firingAngle = data.state;
   });
 
   socket.emit('init', {
@@ -228,15 +238,15 @@ var Shell = function(parent, angle) {
     for (var i in Player.list) {
       var p = Player.list[i];
       if (self.getDistance(p) < 32 && parent.id !== p.id) {
-        p.hp -= 1;
+        p.hp -= 2.5;
         if (p.hp <= 0) {
-          var shooter = Player.list[self.parent];
+          var shooter = Player.list[self.parent.id];
           if (shooter) {
             shooter.score += 1;
+            console.log(shooter.score);
           }
           p.hp = p.maxHp;
           p.x = Math.random() * 500;
-          //p.y = Math.random() * 500;
         }
 
         self.toRemove = true;

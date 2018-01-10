@@ -228,9 +228,10 @@ document.onkeyup = function(event) {
       inputId: 'left',
       state: false
     });
-  else if (event.keyCode === 87)
+  else if (event.keyCode === 87){
     socket.emit('keyPress', {
       inputId: 'firing',
       state: false
     });
+  }
 }
