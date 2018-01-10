@@ -63,6 +63,8 @@ var GetDisconnectedPlayer = function(p){
     numberOfPlayers = 1;
   } else if (numberOfPlayers == 1 && p.y == tankTwoy){
     numberOfPlayers = 0;
+  } else if (numberOfPlayers == 0 && p.y == tankOney){
+    numberOfPlayers = 1;
   }
 }
 var SOCKET_LIST = {};
