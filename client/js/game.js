@@ -1,145 +1,236 @@
+var WIDTH = 800;
+var HEIGHT = 600;
 var socket = io();
-var cursors;
-var velocity = 0;
-var game = new Phaser.Game(1000, 1000, Phaser.AUTO, 'main_game', {
-  preload: preload,
-  create: create,
-  update: update,
-  CarInteraction: CarInteraction,
-  CarUpdate: CarUpdate
-});
-var x = 0;
-var y = 0;
-var playerCar;
-var CollisionTrack;
-var playerMap = [];
 
-function preload() {
-  this.game.load.spritesheet('track', 'client/img/Background-Track.png');
-  this.game.load.spritesheet('car', 'client/img/CarSmall.png');
-  game.load.spritesheet('Collision-Track', 'client/img/Collision-Track.png');
-  game.load.physics("collision", "client/img/collision.json");
-  this.game.scale.pageAlignHorizontally = true;
-  this.game.scale.pageAlignVertically = true;
-  this.game.scale.refresh();
-  //this.game.world.scale.setTo(2.5, 2.5);
-}
+// LOGIN SCRIPT //
+var logInDiv = document.getElementById('logInDiv');
+var logInDivLogIn = document.getElementById('logInDiv-logIn');
+var logInDivSignUp = document.getElementById('logInDiv-signUp');
+var logInDivUsername = document.getElementById('logInDiv-username');
+var logInDivPassword = document.getElementById('logInDiv-password');
+var playerNumber = 0;
 
-function create() {
-  console.log("creating game");
-  game.physics.startSystem(Phaser.Physics.P2JS);
-  var track = game.add.sprite(0, 0, 'track');
-  CollisionTrack = game.add.sprite(500, 500, 'Collision-Track');
-  console.log("Track and collision added");
-  car.askNewPlayer();
-  console.log(game.playerCar);
-  //car = game.add.sprite(600, 100, 'car');
-}
-
-function update() {
-  setTimeout(CarUpdate(), 10000);
-  this.camera.follow(playerCar, Phaser.Camera.FOLLOW_LOCKON);
-  if (cursors.up.isDown && velocity <= 200) {
-    velocity += 4;
-    socket.emit('keyPress', {inputId: 'up',state: true});
-  }
-  else if (cursors.up.isUp) {
-    socket.emit('keyPress', {inputId: 'up',state: true});
-    if (velocity >= 1)
-      velocity -= 1;
-  }
-
-  if (cursors.down.isDown && velocity >= -50) {
-    velocity -= 4;
-    socket.emit('keyPress', {inputId: 'down',state: true});
-  }
-  else if (cursors.up.isUp) {
-    socket.emit('keyPress', {inputId: 'down',state: true});
-    if (velocity <= -1)
-      velocity += 1;
-  }
-
-
-
-  playerCar.body.velocity.x = velocity * Math.cos((playerCar.angle - 90) * 0.01745);
-  playerCar.body.velocity.y = velocity * Math.sin((playerCar.angle - 90) * 0.01745);
-
-  if (cursors.left.isDown)
-  {
-    playerCar.body.angularVelocity = -1 * (velocity / 50);
-    socket.emit('keyPress',{inputId:'left', state:true});
-  }
-  else if (cursors.right.isDown)
-  {
-    playerCar.body.angularVelocity = 1 * (velocity / 50);
-    socket.emit('keyPress',{inputId:'right', state:true});
-  }
-  else
-  {
-    playerCar.body.angularVelocity = 0;
-  }
-
-  text.setText("Speed = " + velocity);
-  text.x = Math.floor(playerCar.x);
-  text.y = Math.floor(playerCar.y - 20);
-}
-
-game.addNewPlayer = function(id, x, y) {
-  console.log("spawning player");
-  playerCar = game.add.sprite(x, y, 'car');
-  console.log(playerCar);
-  setTimeout(CarInteraction(), 10000);
-};
-
-function CarInteraction() {
-  console.log("beinging inetaction");
-  if (playerCar != null) {
-    console.log(playerCar);
-    game.physics.p2.enable(playerCar);
-    playerCar.body.angle = 0;
-    cursors = game.input.keyboard.createCursorKeys();
-
-    var carCollisionGroup = game.physics.p2.createCollisionGroup();
-    var CollisionTrackCollisionGroup = game.physics.p2.createCollisionGroup();
-    game.physics.p2.updateBoundsCollisionGroup();
-
-    game.physics.p2.enable(CollisionTrack);
-    CollisionTrack.body.kinematic = true;
-    CollisionTrack.body.clearShapes();
-    CollisionTrack.body.loadPolygon('collision', 'Collision-Track');
-
-    playerCar.body.setCollisionGroup(carCollisionGroup);
-    CollisionTrack.body.setCollisionGroup(CollisionTrackCollisionGroup);
-
-    playerCar.body.collides([carCollisionGroup, CollisionTrackCollisionGroup]);
-    CollisionTrack.body.collides([CollisionTrackCollisionGroup, carCollisionGroup]);
-
-    count = 0;
-
-    text = game.add.text(150, 900, "Speed = 0", {
-      font: "10px Arial",
-      fill: "#000000",
-      align: "center"
-    });
-
-    text.anchor.setTo(0.5, 0.5);
-  }
-
-
-}
-
-function CarUpdate(){
-  socket.on('newPostions', function(data) {
-    for (var i = 0; i < data.length; i++) {
-      //console.log("updating playerCar");
-      //console.log("X = " + data[i].x);
-      //console.log("Y = " + data[i].y);
-      x = data[i].x;
-      y = data[i].y;
-      //console.log("CAR " + playerCar);
-      playerCar.x = data[i].x;
-      playerCar.y = data[i].y;
-    }
+logInDivLogIn.onclick = function() {
+  socket.emit('logIn', {
+    username: logInDivUsername.value,
+    password: logInDivPassword.value
   });
+}
+logInDivSignUp.onclick = function() {
+  socket.emit('signUp', {
+    username: logInDivUsername.value,
+    password: logInDivPassword.value
+  });
+}
+socket.on('logInResponse', function(data) {
+    playerNumber = data.numPly;
+    console.log(playerNumber);
+    if (data.success) {
+      logInDiv.style.display = 'none';
+      gameDiv.style.display = 'inline-block';
+    } else{
+      alert("Log in unsuccessful.");
+    }
+});
 
+socket.on('fullResponse', function(data) {
+  alert("Server is Full");
+});
+
+socket.on('signUpResponse', function(data) {
+  if (data.success) {
+    alert("Sign up successul.");
+  } else
+    alert("Sign up unsuccessul.");
+});
+
+// CHAT SCRIPT //
+var ingameText = document.getElementById('ingame-text');
+var ingameTextInput = document.getElementById('ingame-text-input');
+var ingameTextForm = document.getElementById('ingame-text-form');
+
+socket.on('addIngameText', function(data) {
+  ingameText.innerHTML += '<div>' + data + '<div>';
+});
+socket.on('evalAnswer', function(data) {
+  console.log(data);
+});
+
+ingameTextForm.onsubmit = function(e) {
+  e.preventDefault();
+  if (ingameTextInput.value[0] === '/') {
+    socket.emit('evalServer', ingameTextInput.value.slice(1));
+  } else {
+    socket.emit('sendTxtToServer', ingameTextInput.value);
+  }
+  ingameTextInput.value = '';
+}
+
+// GAME SCRIPT //
+var Img = {};
+Img.player = new Image();
+Img.player.src = '/client/img/tank.png';
+Img.player2 = new Image();
+Img.player2.src = '/client/img/tank2.png';
+Img.shell = new Image();
+Img.shell.src = '/client/img/bullet.png';
+Img.map = new Image();
+Img.map.src = '/client/img/map.png';
+var ctx = document.getElementById("ctx").getContext("2d");
+ctx.font = '30px Arial';
+
+  var Player = function(initPack) {
+    var self = {};
+    self.id = initPack.id;
+    self.number = initPack.number;
+    self.x = initPack.x;
+    self.y = initPack.y;
+    self.hp = initPack.hp;
+    self.maxHp = initPack.maxHp;
+    self.score = initPack.score;
+    self.draw = function() {
+      var hpWidth = 30 * self.hp / self.maxHp;
+      ctx.fillStyle = 'green';
+      ctx.fillRect(self.x - hpWidth / 2, self.y - 40, hpWidth, 4);
+      var width = Img.player.width * 2;
+      var height = Img.player.height * 2;
+      if(self.y > 300)
+        ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x - width / 2, self.y - height / 2, width, height);
+      else {
+        ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, self.x - width / 2, self.y - height / 2, width, height);
+      }
+    }
+    console.log("x = " + self.x + "y = " + self.y);
+    Player.list[self.id] = self;
+    return self;
+  }
+
+  Player.list = {};
+
+  var Shell = function(initPack) {
+    var self = {};
+    self.id = initPack.id;
+    self.x = initPack.x;
+    self.y = initPack.y;
+    self.draw = function() {
+      var width = Img.shell.width;
+      var height = Img.shell.height;
+      ctx.drawImage(Img.shell, 0, 0, Img.shell.width, Img.shell.height,
+        self.x - 5, self.y - 30, width, height);
+    }
+    Shell.list[self.id] = self;
+    return self;
+  }
+
+  Shell.list = {};
+
+
+var selfId = null;
+
+socket.on('init', function(data) {
+  if (data.selfId) {
+    selfId = data.selfId;
+  }
+    for (var i = 0; i < data.player.length; i++) {
+      new Player(data.player[i]);
+    }
+    for (var i = 0; i < data.shell.length; i++) {
+      new Shell(data.shell[i]);
+    }
+});
+
+socket.on('update', function(data) {
+  for (var i = 0; i < data.player.length; i++) {
+    var pack = data.player[i];
+    var p = Player.list[pack.id];
+    if (p) {
+      if (pack.x !== undefined)
+        p.x = pack.x;
+      if (pack.y !== undefined)
+        p.y = pack.y;
+      if (pack.hp !== undefined)
+        p.hp = pack.hp;
+      if (pack.score !== undefined)
+        p.score = pack.score;
+    }
+  }
+  for (var i = 0; i < data.shell.length; i++) {
+    var pack = data.shell[i];
+    var s = Shell.list[data.shell[i].id];
+    if (s) {
+      if (pack.x !== undefined)
+        s.x = pack.x;
+      if (pack.y !== undefined)
+        s.y = pack.y;
+    }
+  }
+});
+
+socket.on('remove', function(data) {
+  for (var i = 0; i < data.player.length; i++) {
+    delete Player.list[data.player[i]];
+  }
+  for (var i = 0; i < data.shell.length; i++) {
+    delete Shell.list[data.shell[i]];
+  }
+});
+
+setInterval(function() {
+  if (!selfId)
+    return;
+  ctx.clearRect(0, 0, 800, 600);
+  drawMap();
+  drawScore();
+  for (var i in Player.list) {
+      Player.list[i].draw();
+    }
+  for (var i in Shell.list) {
+    Shell.list[i].draw();
+  }
+}, 40);
+
+var drawMap = function() {
+  ctx.drawImage(Img.map, 0, 0);
+}
+
+var drawScore = function() {
+  ctx.fillRect(0, 0, 120, 40);
+  ctx.fillStyle = "white";
+  ctx.fillText("Score: " + Player.list[selfId].score, 0, 30);
+}
+
+document.onkeydown = function(event) {
+  if (event.keyCode === 68)
+    socket.emit('keyPress', {
+      inputId: 'right',
+      state: true
+    });
+  else if (event.keyCode === 65)
+    socket.emit('keyPress', {
+      inputId: 'left',
+      state: true
+    });
+  else if (event.keyCode === 87)
+    socket.emit('keyPress', {
+      inputId: 'firing',
+      state: true
+    });
+}
+
+document.onkeyup = function(event) {
+  if (event.keyCode === 68)
+    socket.emit('keyPress', {
+      inputId: 'right',
+      state: false
+    });
+  else if (event.keyCode === 65)
+    socket.emit('keyPress', {
+      inputId: 'left',
+      state: false
+    });
+  else if (event.keyCode === 87)
+    socket.emit('keyPress', {
+      inputId: 'firing',
+      state: false
+    });
 }
