@@ -194,7 +194,7 @@ var drawMap = function() {
 }
 
 var drawScore = function() {
-  ctx.fillRect(0, 0, 120, 40);
+  ctx.fillRect(0, 0, 130, 40);
   ctx.fillStyle = "white";
   ctx.fillText("Score: " + Player.list[selfId].score, 0, 30);
 }

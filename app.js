@@ -26,7 +26,6 @@ var tankOneFiringAngle = 270;
 var tankTwoFiringAngle = 180;
 var x;
 var y;
-var Ontop = false;
 var canFire = true;
 var fireTimer;
 
@@ -69,7 +68,7 @@ var GetDisconnectedPlayer = function(p) {
   }
 }
 
-  fireTimer = setInterval(function(){}, 1);
+fireTimer = setInterval(function(){}, 1);
 
 var AbleToFire = function(){
   if(canFire == true){
@@ -117,10 +116,10 @@ var Player = function(id) {
   self.atTop = false;
   GetShellSpeed(self);
   //override for speed and update//
-  var super_update = self.update;
+  var tank_update = self.update;
   self.update = function() {
     self.updateSpd();
-    super_update();
+    tank_update();
     if (self.pressingClick && canFire == true) {
       self.fireShell(self.firingAngle);
       self.pressingClick = false;
@@ -142,13 +141,6 @@ var Player = function(id) {
       self.spdX = -self.maxSpeed;
     else
       self.spdX = 0;
-
-    if (self.pressingUp)
-      self.spdY = -self.maxSpeed;
-    else if (self.pressingDown)
-      self.spdY = self.maxSpeed;
-    else
-      self.spdY = 0;
   }
 
   self.getInitPack = function() {
@@ -207,7 +199,6 @@ Player.getLoginPack = function() {
 }
 
 Player.onDisconnect = function(socket) {
-  console.log(numberOfPlayers);
   delete Player.list[socket.id];
   removePack.player.push(socket.id);
 }
@@ -229,11 +220,11 @@ var Shell = function(parent, angle) {
   self.spdY = parent.shellSpeedy;
   self.timer = 0;
   self.toRemove = false;
-  var super_update = self.update;
+  var shell_update = self.update;
   self.update = function() {
     if (self.timer++ > 100)
       self.toRemove = true;
-    super_update();
+    shell_update();
 
     for (var i in Player.list) {
       var p = Player.list[i];

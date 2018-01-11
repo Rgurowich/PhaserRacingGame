@@ -6,16 +6,24 @@
 <div id="gameDiv" style="display:none;">
   <canvas id="ctx" width="800" height="600" style="border:1px solid #000000;"></canvas>
 
-  <div id="ingame-text" style="width:500px;height:100px;overflow-y:scroll">
+  <div id="ingame-text" style="width:800px;height:200px;overflow-y:scroll">
     <div>Welcome!</div>
   </div>
 
   <form id="ingame-text-form">
-    <input id="ingame-text-input" type="text" style="width:500px"></input>
+    <input id="ingame-text-input" type="text" style="width:800px"></input>
   </form>
 </div>
 
 <head>
+  <style>
+    #gameDiv{
+      margin-left: auto;
+      margin-right: auto;
+      border: 3px solid green;
+      padding: 10px;
+    }
+  </style>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/client/js/game.js"></script>
 </head>
