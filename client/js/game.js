@@ -10,6 +10,17 @@ var logInDivUsername = document.getElementById('logInDiv-username');
 var logInDivPassword = document.getElementById('logInDiv-password');
 var playerNumber = 0;
 
+socket.on('fullResponse', function(data) {
+  alert("Server is Full");
+});
+
+socket.on('signUpResponse', function(data) {
+  if (data.success) {
+    alert("Sign up successul.");
+  } else
+    alert("Sign up unsuccessul.");
+});
+
 logInDivLogIn.onclick = function() {
   socket.emit('logIn', {
     username: logInDivUsername.value,
@@ -33,17 +44,6 @@ socket.on('logInResponse', function(data) {
   }
 });
 
-socket.on('fullResponse', function(data) {
-  alert("Server is Full");
-});
-
-socket.on('signUpResponse', function(data) {
-  if (data.success) {
-    alert("Sign up successul.");
-  } else
-    alert("Sign up unsuccessul.");
-});
-
 // CHAT SCRIPT //
 var ingameText = document.getElementById('ingame-text');
 var ingameTextInput = document.getElementById('ingame-text-input');
@@ -52,17 +52,10 @@ var ingameTextForm = document.getElementById('ingame-text-form');
 socket.on('addIngameText', function(data) {
   ingameText.innerHTML += '<div>' + data + '<div>';
 });
-socket.on('evalAnswer', function(data) {
-  console.log(data);
-});
 
-ingameTextForm.onsubmit = function(e) {
-  e.preventDefault();
-  if (ingameTextInput.value[0] === '/') {
-    socket.emit('evalServer', ingameTextInput.value.slice(1));
-  } else {
-    socket.emit('sendTxtToServer', ingameTextInput.value);
-  }
+ingameTextForm.onsubmit = function(event) {
+  event.preventDefault();
+  socket.emit('sendTxtToServer', ingameTextInput.value);
   ingameTextInput.value = '';
 }
 
@@ -85,19 +78,25 @@ var Player = function(initPack) {
   self.number = initPack.number;
   self.x = initPack.x;
   self.y = initPack.y;
-  self.hp = initPack.hp;
-  self.maxHp = initPack.maxHp;
+  self.health = initPack.hp;
+  self.maxHealth = initPack.maxHp;
   self.score = initPack.score;
   self.draw = function() {
-    var hpWidth = 30 * self.hp / self.maxHp;
-    ctx.fillStyle = 'green';
-    ctx.fillRect(self.x - hpWidth / 2, self.y - 40, hpWidth, 4);
-    var width = Img.player.width * 2;
-    var height = Img.player.height * 2;
+    var hpWidth = 50 * self.health / self.maxHealth;
+    if(self.health <= 10 && self.health >= 7){
+      ctx.fillStyle = 'green';
+    } else if (self.health < 7 && self.health >= 4){
+      ctx.fillStyle = 'orange';
+    } else if (self.health < 4 && self.health >= 1){
+      ctx.fillStyle = 'red';
+    }
+    ctx.fillRect(self.x - hpWidth / 2, self.y + 40, hpWidth, 4);
+    var tankWidth = Img.player.width * 2;
+    var tankHeight = Img.player.height * 2;
     if (self.y > 300)
-      ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x - width / 2, self.y - height / 2, width, height);
+      ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x - tankWidth / 2, self.y - tankHeight / 2, tankWidth, tankHeight);
     else {
-      ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, self.x - width / 2, self.y - height / 2, width, height);
+      ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, self.x - tankWidth / 2, self.y - tankHeight / 2, tankWidth, tankHeight);
     }
   }
   console.log("x = " + self.x + "y = " + self.y);
@@ -113,17 +112,16 @@ var Shell = function(initPack) {
   self.x = initPack.x;
   self.y = initPack.y;
   self.draw = function() {
-    var width = Img.shell.width;
-    var height = Img.shell.height;
+    var shellWidth = Img.shell.width;
+    var shellHeight = Img.shell.height;
     ctx.drawImage(Img.shell, 0, 0, Img.shell.width, Img.shell.height,
-      self.x - 5, self.y - 30, width, height);
+      self.x - 5, self.y - 30, shellWidth, shellHeight);
   }
   Shell.list[self.id] = self;
   return self;
 }
 
 Shell.list = {};
-
 
 var selfId = null;
 
@@ -142,26 +140,26 @@ socket.on('init', function(data) {
 socket.on('update', function(data) {
   for (var i = 0; i < data.player.length; i++) {
     var pack = data.player[i];
-    var p = Player.list[pack.id];
-    if (p) {
+    var tank = Player.list[pack.id];
+    if (tank) {
       if (pack.x !== undefined)
-        p.x = pack.x;
+        tank.x = pack.x;
       if (pack.y !== undefined)
-        p.y = pack.y;
+        tank.y = pack.y;
       if (pack.hp !== undefined)
-        p.hp = pack.hp;
+        tank.health = pack.hp;
       if (pack.score !== undefined)
-        p.score = pack.score;
+        tank.score = pack.score;
     }
   }
   for (var i = 0; i < data.shell.length; i++) {
     var pack = data.shell[i];
-    var s = Shell.list[data.shell[i].id];
-    if (s) {
+    var shell = Shell.list[data.shell[i].id];
+    if (shell) {
       if (pack.x !== undefined)
-        s.x = pack.x;
+        shell.x = pack.x;
       if (pack.y !== undefined)
-        s.y = pack.y;
+        shell.y = pack.y;
     }
   }
 });
@@ -179,8 +177,8 @@ setInterval(function() {
   if (!selfId)
     return;
   ctx.clearRect(0, 0, 800, 600);
-  drawMap();
-  drawScore();
+  drawGameMap();
+  drawTankScore();
   for (var i in Player.list) {
     Player.list[i].draw();
   }
@@ -189,11 +187,11 @@ setInterval(function() {
   }
 }, 40);
 
-var drawMap = function() {
+var drawGameMap = function() {
   ctx.drawImage(Img.map, 0, 0);
 }
 
-var drawScore = function() {
+var drawTankScore = function() {
   ctx.fillRect(0, 0, 130, 40);
   ctx.fillStyle = "white";
   ctx.fillText("Score: " + Player.list[selfId].score, 0, 30);

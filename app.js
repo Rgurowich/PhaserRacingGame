@@ -68,12 +68,14 @@ var GetDisconnectedPlayer = function(p) {
   }
 }
 
-fireTimer = setInterval(function(){}, 1);
+fireTimer = setInterval(function() {}, 1);
 
-var AbleToFire = function(){
-  if(canFire == true){
+var AbleToFire = function() {
+  if (canFire == true) {
     canFire = false;
-    fireTimer = setInterval(function(){canFire = true}, 2000);
+    fireTimer = setInterval(function() {
+      canFire = true
+    }, 2000);
   }
 }
 var SOCKET_LIST = {};
@@ -106,11 +108,11 @@ var Player = function(id) {
   self.number = "" + Math.floor(10 * Math.random());
   self.pressingRight = false;
   self.pressingLeft = false;
-  self.pressingClick = false;
-  self.firingAngle = tankOneFiringAngle;
-  self.maxSpeed = 10;
-  self.hp = 10;
-  self.maxHp = 10;
+  self.firingWeapon = false;
+  self.firingDirection = tankOneFiringAngle;
+  self.tankMovementSpeed = 10;
+  self.health = 10;
+  self.maxHealth = 10;
   self.score = 0;
   self.shellSpeedy = 0;
   self.atTop = false;
@@ -120,25 +122,25 @@ var Player = function(id) {
   self.update = function() {
     self.updateSpd();
     tank_update();
-    if (self.pressingClick && canFire == true) {
-      self.fireShell(self.firingAngle);
-      self.pressingClick = false;
+    if (self.firingWeapon && canFire == true) {
+      self.fireShell(self.firingDirection);
+      self.firingWeapon = false;
       AbleToFire();
     }
     GetDisconnectedPlayer(self);
   }
   self.fireShell = function(angle, x, y) {
-    var s = Shell(self, angle, x, y);
-    s.x = self.x;
-    s.y = self.y;
+    var shell = Shell(self, angle, x, y);
+    shell.x = self.x;
+    shell.y = self.y;
     clearInterval(fireTimer);
   }
 
   self.updateSpd = function() {
     if (self.pressingRight)
-      self.spdX = self.maxSpeed;
+      self.spdX = self.tankMovementSpeed;
     else if (self.pressingLeft)
-      self.spdX = -self.maxSpeed;
+      self.spdX = -self.tankMovementSpeed;
     else
       self.spdX = 0;
   }
@@ -149,8 +151,8 @@ var Player = function(id) {
       x: self.x,
       y: self.y,
       number: self.number,
-      hp: self.hp,
-      maxHp: self.maxHp,
+      hp: self.health,
+      maxHp: self.maxHealth,
       score: self.score,
     };
   }
@@ -159,7 +161,7 @@ var Player = function(id) {
       id: self.id,
       x: self.x,
       y: self.y,
-      hp: self.hp,
+      hp: self.health,
       score: self.score,
     };
   }
@@ -173,14 +175,14 @@ Player.list = {};
 
 //Creates new player//
 Player.onConnect = function(socket) {
-  var player = Player(socket.id);
+  var tank = Player(socket.id);
   socket.on('keyPress', function(data) {
     if (data.inputId === 'left')
-      player.pressingLeft = data.state;
+      tank.pressingLeft = data.state;
     else if (data.inputId === 'right')
-      player.pressingRight = data.state;
+      tank.pressingRight = data.state;
     else if (data.inputId === 'firing')
-      player.pressingClick = data.state;
+      tank.firingWeapon = data.state;
   });
 
   socket.emit('init', {
@@ -227,19 +229,18 @@ var Shell = function(parent, angle) {
     shell_update();
 
     for (var i in Player.list) {
-      var p = Player.list[i];
-      if (self.getDistance(p) < 32 && parent.id !== p.id) {
-        p.hp -= 2.5;
-        if (p.hp <= 0) {
-          var shooter = Player.list[self.parent.id];
-          if (shooter) {
-            shooter.score += 1;
-            console.log(shooter.score);
+      var tank = Player.list[i];
+      if (self.getDistance(tank) < 32 && parent.id !== tank.id) {
+        tank.health -= 2.5;
+        if (tank.health <= 0) {
+          var firingTank = Player.list[self.parent.id];
+          if (firingTank) {
+            firingTank.score += 1;
+            console.log(firingTank.score);
           }
-          p.hp = p.maxHp;
-          p.x = Math.random() * 500;
+          tank.health = tank.maxHealth;
+          tank.x = Math.random() * 500;
         }
-
         self.toRemove = true;
       }
     }
@@ -288,8 +289,6 @@ Shell.getLoginPack = function() {
   return shells;
 }
 
-var DEBUG = true;
-
 var isValidPassword = function(data, cb) {
   accountDB.UserAccounts.find({
     username: data.username,
@@ -330,7 +329,6 @@ io.sockets.on('connection', function(socket) {
     isValidPassword(data, function(res) {
       if (res && numberOfPlayers < 2) {
         numberOfPlayers++;
-        //Calls for new player once they have loged in//
         Player.onConnect(socket);
         socket.emit('logInResponse', {
           success: true,
@@ -374,13 +372,6 @@ io.sockets.on('connection', function(socket) {
     for (var i in SOCKET_LIST) {
       SOCKET_LIST[i].emit('addIngameText', playerName + ': ' + data);
     }
-  });
-  socket.on('evalServer', function(data) {
-    if (!DEBUG) {
-      return;
-    }
-    var res = eval(data);
-    socket.emit('evalAnswer', res);
   });
 });
 
